@@ -249,3 +249,64 @@
   --bolt-elements-terminal-color-brightCyan: var(--bolt-terminal-brightCyan);
   --bolt-elements-terminal-color-brightWhite: var(--bolt-terminal-brightWhite);
 }
+
+.context-menu {
+  background: var(--cm-backgroundColor);
+  border: 1px solid var(--bolt-elements-borderColor);
+  border-radius: 4px;
+  padding: 4px 0;
+  width: 214px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 32px;
+  border: none;
+  background: none;
+  color: var(--bolt-elements-textPrimary);
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  font-family: Inter;
+  padding: 0 12px 0 32px;
+
+  &:hover {
+    background: var(--bolt-elements-item-backgroundActive);
+  }
+
+  &.divider {
+    border-top: 1px solid var(--bolt-elements-borderColor);
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+
+  .context-menu-icon {
+    margin-left: -20px;
+    margin-right: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: inherit;
+  }
+}
+
+.context-menu-item-with-icon {
+  padding-left: 8px;
+}
+
+.context-menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}

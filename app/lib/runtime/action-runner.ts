@@ -180,7 +180,31 @@ export class ActionRunner {
 
   #updateAction(id: string, newState: ActionStateUpdate) {
     const actions = this.actions.get();
-
     this.actions.setKey(id, { ...actions[id], ...newState });
+  }
+
+  async createFile(path: string, content: string = '') {
+    try {
+      const webcontainer = await this.#webcontainer;
+      await webcontainer.fs.writeFile(path, content);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to create file:', error);
+
+      return { success: false, error };
+    }
+  }
+
+  async createFolder(path: string) {
+    try {
+      const webcontainer = await this.#webcontainer;
+      await webcontainer.fs.mkdir(path, { recursive: true });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to create folder:', error);
+      return { success: false, error };
+    }
   }
 }

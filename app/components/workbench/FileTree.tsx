@@ -2,6 +2,9 @@ import { memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { FileMap } from '~/lib/stores/files';
 import { classNames } from '~/utils/classNames';
 import { createScopedLogger, renderLogger } from '~/utils/logger';
+import { webcontainer } from '~/lib/webcontainer';
+import { ContextMenu } from '~/components/ui/ContextMenu';
+import path from 'path';
 
 const logger = createScopedLogger('FileTree');
 
@@ -19,6 +22,7 @@ interface Props {
   hiddenFiles?: Array<string | RegExp>;
   unsavedFiles?: Set<string>;
   className?: string;
+  refreshFiles?: () => void;
 }
 
 export const FileTree = memo(
@@ -33,6 +37,7 @@ export const FileTree = memo(
     hiddenFiles,
     className,
     unsavedFiles,
+    refreshFiles = () => {},
   }: Props) => {
     renderLogger.trace('FileTree');
 
@@ -110,8 +115,258 @@ export const FileTree = memo(
       });
     };
 
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // add visual feedback for drag
+      e.currentTarget.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.currentTarget.classList.remove('drag-over');
+    };
+
+    const handleDrop = async (e: React.DragEvent, folderPath: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.currentTarget.classList.remove('drag-over');
+
+      const files = Array.from(e.dataTransfer.files);
+      const container = await webcontainer;
+
+      for (const file of files) {
+        try {
+          const content = await file.arrayBuffer();
+          const filePath = `${folderPath}/${file.name}`;
+          await container.fs.writeFile(filePath, new Uint8Array(content));
+          onFileSelect?.(filePath);
+        } catch (error) {
+          console.error('Failed to upload file:', error);
+        }
+      }
+    };
+
+    const [contextMenu, setContextMenu] = useState<{
+      x: number;
+      y: number;
+      path: string;
+    } | null>(null);
+
+    const handleContextMenu = (e: React.MouseEvent, filePath: string) => {
+      e.preventDefault();
+      console.log('1. Right click received with path:', filePath);
+
+      const cleanPath = filePath.replace(/^\/home\/project/, '');
+
+      console.log('2. After cleaning path in handleContextMenu:', cleanPath);
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        path: cleanPath,
+      });
+    };
+
+    const [renamingItem, setRenamingItem] = useState<{
+      path: string;
+      isNew: boolean;
+      type: 'file' | 'folder';
+    } | null>(null);
+
+    const handleNewFile = async () => {
+      const container = await webcontainer;
+      const timestamp = Date.now();
+
+      // get parent path from context menu and clean it
+      const parentPath = (contextMenu?.path || '').replace(/^\/home\/project/, '') || '/';
+
+      // build the full paths
+      const fileName = `untitled-${timestamp}`;
+      const fullPath = `/home/project${parentPath === '/' ? '' : parentPath}/${fileName}`;
+      const cleanPath = fullPath.replace(/^\/home\/project/, '');
+
+      try {
+        await container.fs.writeFile(cleanPath, '');
+        setRenamingItem({
+          path: fullPath,
+          isNew: true,
+          type: 'file',
+        });
+        refreshFiles();
+      } catch (error) {
+        console.error('failed to create file:', error);
+      }
+    };
+
+    const handleNewFolder = async (parentPath: string) => {
+      const container = await webcontainer;
+      const timestamp = Date.now();
+
+      // clean the parent path and handle root case
+      const cleanParentPath = parentPath.replace(/^\/home\/project/, '') || '/';
+
+      // build the full paths
+      const folderName = `untitled-${timestamp}`;
+      const fullPath = `/home/project${cleanParentPath === '/' ? '' : cleanParentPath}/${folderName}`;
+      const cleanPath = fullPath.replace(/^\/home\/project/, '');
+
+      try {
+        await container.fs.mkdir(cleanPath);
+        setRenamingItem({
+          path: fullPath,
+          isNew: true,
+          type: 'folder',
+        });
+        refreshFiles();
+      } catch (error) {
+        console.error('Failed to create folder:', error);
+      }
+    };
+
+    const handleRenameComplete = async (oldPath: string, newName: string) => {
+      if (!newName.trim()) {
+        // if name is empty and this was a new item, delete it
+        if (renamingItem?.isNew) {
+          const container = await webcontainer;
+          const cleanPath = oldPath.replace(/^\/home\/project/, '');
+          await container.fs.rm(cleanPath, { recursive: true });
+        }
+
+        setRenamingItem(null);
+        refreshFiles();
+
+        return;
+      }
+
+      try {
+        const container = await webcontainer;
+        const cleanOldPath = oldPath.replace(/^\/home\/project/, '');
+        const dirPath = path.dirname(cleanOldPath);
+        const cleanNewPath = `${dirPath}/${newName}`;
+
+        console.log('Renaming from:', cleanOldPath, 'to:', cleanNewPath);
+
+        await container.fs.rename(cleanOldPath, cleanNewPath);
+        setRenamingItem(null);
+        refreshFiles();
+
+        // select the newly created/renamed file
+        if (renamingItem?.type === 'file') {
+          onFileSelect?.(cleanNewPath);
+        }
+      } catch (error) {
+        console.error('Failed to rename:', error);
+        setRenamingItem(null);
+      }
+    };
+
+    const contextMenuItems = [
+      {
+        label: 'New file...',
+        action: () => {
+          console.log('3. Context menu "New file" clicked');
+          console.log('4. Context menu state path:', contextMenu?.path);
+          handleNewFile();
+        },
+      },
+      {
+        label: 'New folder...',
+        action: () => handleNewFolder(contextMenu?.path || ''),
+      },
+      {
+        label: 'Target file',
+        icon: <div className="i-ph-target" />,
+        action: () => {
+          /* don't implement target action as this is a future feature */
+        },
+        className: 'divider',
+      },
+      {
+        label: 'Lock file',
+        icon: <div className="i-ph-lock" />,
+        action: () => {
+          /* don't implement lock action as this is a future feature */
+        },
+      },
+      {
+        label: 'Cut',
+        action: async () => {
+          const container = await webcontainer;
+          const content = await container.fs.readFile(contextMenu?.path || '', 'utf-8');
+          await navigator.clipboard.writeText(content);
+          await container.fs.rm(contextMenu?.path || '');
+        },
+        className: 'divider',
+      },
+      {
+        label: 'Copy',
+        action: async () => {
+          const container = await webcontainer;
+          const content = await container.fs.readFile(contextMenu?.path || '', 'utf-8');
+          await navigator.clipboard.writeText(content);
+        },
+      },
+      {
+        label: 'Copy path',
+        action: () => {
+          navigator.clipboard.writeText(contextMenu?.path || '');
+        },
+      },
+      {
+        label: 'Copy relative path',
+        action: () => {
+          const relativePath = contextMenu?.path?.replace(rootFolder || '/', '') ?? '';
+          navigator.clipboard.writeText(relativePath);
+        },
+      },
+      {
+        label: 'Rename...',
+        action: () => {
+          const path = contextMenu?.path?.replace(/^\/home\/project/, '') || '';
+          setRenamingItem({
+            path,
+            isNew: false,
+            type: 'file',
+          });
+        },
+        className: 'divider',
+      },
+      {
+        label: 'Delete',
+        action: async () => {
+          if (!contextMenu?.path) {
+            console.error('no path to delete');
+            return;
+          }
+
+          const container = await webcontainer;
+          const cleanPath = contextMenu.path.replace(/^\/home\/project/, '');
+
+          console.log('attempting to delete path:', cleanPath);
+
+          try {
+            await container.fs.rm(cleanPath, { recursive: true });
+            refreshFiles();
+          } catch (error) {
+            console.error('failed to delete:', error);
+          }
+        },
+      },
+    ];
+
     return (
-      <div className={classNames('text-sm', className)}>
+      <div
+        className={classNames('file-tree', className)}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={(e) => handleDrop(e, rootFolder ?? '/')}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          handleContextMenu(e, rootFolder ?? '/');
+        }}
+      >
         {filteredFileList.map((fileOrFolder) => {
           switch (fileOrFolder.kind) {
             case 'file': {
@@ -124,6 +379,12 @@ export const FileTree = memo(
                   onClick={() => {
                     onFileSelect?.(fileOrFolder.fullPath);
                   }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    handleContextMenu(e, fileOrFolder.fullPath);
+                  }}
+                  renamingItem={renamingItem}
+                  handleRenameComplete={handleRenameComplete}
                 />
               );
             }
@@ -137,6 +398,12 @@ export const FileTree = memo(
                   onClick={() => {
                     toggleCollapseState(fileOrFolder.fullPath);
                   }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    handleContextMenu(e, fileOrFolder.fullPath);
+                  }}
+                  renamingItem={renamingItem}
+                  handleRenameComplete={handleRenameComplete}
                 />
               );
             }
@@ -145,6 +412,14 @@ export const FileTree = memo(
             }
           }
         })}
+        {contextMenu && (
+          <ContextMenu
+            items={contextMenuItems}
+            x={contextMenu.x}
+            y={contextMenu.y}
+            onClose={() => setContextMenu(null)}
+          />
+        )}
       </div>
     );
   },
@@ -157,9 +432,48 @@ interface FolderProps {
   collapsed: boolean;
   selected?: boolean;
   onClick: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+  renamingItem: { path: string; isNew: boolean; type: 'file' | 'folder' } | null;
+  handleRenameComplete: (oldPath: string, newName: string) => void;
 }
 
-function Folder({ folder: { depth, name }, collapsed, selected = false, onClick }: FolderProps) {
+function Folder({
+  folder,
+  collapsed,
+  selected = false,
+  onClick,
+  onContextMenu,
+  renamingItem,
+  handleRenameComplete,
+}: FolderProps) {
+  const isRenaming = renamingItem?.path === folder.fullPath;
+
+  if (isRenaming) {
+    return (
+      <div className="flex items-center" style={{ paddingLeft: `${6 + folder.depth * NODE_PADDING_LEFT}px` }}>
+        <div
+          className={classNames('scale-120 shrink-0', {
+            'i-ph:caret-right scale-98': collapsed,
+            'i-ph:caret-down scale-98': !collapsed,
+          })}
+        />
+        <input
+          className="flex-1 bg-transparent border border-bolt-elements-borderColorActive rounded px-1 mx-1 outline-none text-bolt-elements-textPrimary"
+          defaultValue={renamingItem.isNew ? '' : folder.name}
+          autoFocus
+          onBlur={(e) => handleRenameComplete(folder.fullPath, e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleRenameComplete(folder.fullPath, e.currentTarget.value);
+            } else if (e.key === 'Escape') {
+              handleRenameComplete(folder.fullPath, '');
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <NodeButton
       className={classNames('group', {
@@ -167,14 +481,15 @@ function Folder({ folder: { depth, name }, collapsed, selected = false, onClick 
           !selected,
         'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent': selected,
       })}
-      depth={depth}
+      depth={folder.depth}
       iconClasses={classNames({
         'i-ph:caret-right scale-98': collapsed,
         'i-ph:caret-down scale-98': !collapsed,
       })}
       onClick={onClick}
+      onContextMenu={onContextMenu}
     >
-      {name}
+      {folder.name}
     </NodeButton>
   );
 }
@@ -184,27 +499,62 @@ interface FileProps {
   selected: boolean;
   unsavedChanges?: boolean;
   onClick: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+  renamingItem: { path: string; isNew: boolean; type: 'file' | 'folder' } | null;
+  handleRenameComplete: (oldPath: string, newName: string) => void;
 }
 
-function File({ file: { depth, name }, onClick, selected, unsavedChanges = false }: FileProps) {
+function File({
+  file,
+  onClick,
+  selected,
+  unsavedChanges = false,
+  onContextMenu,
+  renamingItem,
+  handleRenameComplete,
+}: FileProps) {
+  const isRenaming = renamingItem?.path === file.fullPath;
+
+  if (isRenaming) {
+    return (
+      <div className="flex items-center" style={{ paddingLeft: `${6 + file.depth * NODE_PADDING_LEFT}px` }}>
+        <div className={classNames('scale-120 shrink-0 i-ph:file-duotone scale-98')} />
+        <input
+          className="flex-1 bg-transparent border border-bolt-elements-borderColorActive rounded px-1 mx-1 outline-none text-bolt-elements-textPrimary"
+          defaultValue={renamingItem.isNew ? '' : file.name}
+          autoFocus
+          onBlur={(e) => handleRenameComplete(file.fullPath, e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleRenameComplete(file.fullPath, e.currentTarget.value);
+            } else if (e.key === 'Escape') {
+              handleRenameComplete(file.fullPath, '');
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <NodeButton
       className={classNames('group', {
         'bg-transparent hover:bg-bolt-elements-item-backgroundActive text-bolt-elements-item-contentDefault': !selected,
         'bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent': selected,
       })}
-      depth={depth}
+      depth={file.depth}
       iconClasses={classNames('i-ph:file-duotone scale-98', {
         'group-hover:text-bolt-elements-item-contentActive': !selected,
       })}
       onClick={onClick}
+      onContextMenu={onContextMenu}
     >
       <div
         className={classNames('flex items-center', {
           'group-hover:text-bolt-elements-item-contentActive': !selected,
         })}
       >
-        <div className="flex-1 truncate pr-2">{name}</div>
+        <div className="flex-1 truncate pr-2">{file.name}</div>
         {unsavedChanges && <span className="i-ph:circle-fill scale-68 shrink-0 text-orange-500" />}
       </div>
     </NodeButton>
@@ -217,9 +567,10 @@ interface ButtonProps {
   children: ReactNode;
   className?: string;
   onClick?: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
 }
 
-function NodeButton({ depth, iconClasses, onClick, className, children }: ButtonProps) {
+function NodeButton({ depth, iconClasses, onClick, className, children, onContextMenu }: ButtonProps) {
   return (
     <button
       className={classNames(
@@ -228,6 +579,7 @@ function NodeButton({ depth, iconClasses, onClick, className, children }: Button
       )}
       style={{ paddingLeft: `${6 + depth * NODE_PADDING_LEFT}px` }}
       onClick={() => onClick?.()}
+      onContextMenu={onContextMenu}
     >
       <div className={classNames('scale-120 shrink-0', iconClasses)}></div>
       <div className="truncate w-full text-left">{children}</div>
