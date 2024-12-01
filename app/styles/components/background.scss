@@ -1,0 +1,11 @@
+.background-glow {
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    150% 150% at 50% -20%,
+    rgba(66, 180, 255, 0.2) 0%,
+    rgba(66, 180, 255, 0.1) 20%,
+    rgba(66, 180, 255, 0.05) 40%,
+    transparent 100%
+  );
+}
