@@ -2,13 +2,15 @@ import { motion, type Variants } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { Dialog, DialogButton, DialogDescription, DialogRoot, DialogTitle } from '~/components/ui/Dialog';
-import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
 import { db, deleteById, getAll, chatId, type ChatHistoryItem } from '~/lib/persistence';
 import { cubicEasingFn } from '~/utils/easings';
 import { logger } from '~/utils/logger';
 import { HistoryItem } from './HistoryItem';
 import { binDates } from './date-binning';
 import { classNames } from '~/utils/classNames';
+import { useStore } from '@nanostores/react';
+import { themeStore } from '~/lib/stores/theme';
+import { Settings } from '~/components/settings/Settings';
 
 const menuVariants = {
   closed: {
@@ -38,6 +40,12 @@ export function Menu() {
   const [list, setList] = useState<ChatHistoryItem[]>([]);
   const [open, setOpen] = useState(false);
   const [dialogContent, setDialogContent] = useState<DialogContent>(null);
+  const theme = useStore(themeStore);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const toggleTheme = () => {
+    themeStore.set(theme === 'dark' ? 'light' : 'dark');
+  };
 
   const loadEntries = useCallback(() => {
     if (db) {
@@ -57,7 +65,6 @@ export function Menu() {
           loadEntries();
 
           if (chatId.get() === item.id) {
-            // hard page navigation to clear the stores
             window.location.pathname = '/';
           }
         })
@@ -113,7 +120,7 @@ export function Menu() {
         animate={open ? 'open' : 'closed'}
         variants={menuVariants}
         className={classNames(
-          'flex flex-col side-menu fixed top-0 w-[350px] h-full bg-bolt-elements-background-depth-2 border-r rounded-r-3xl border-bolt-elements-borderColor z-sidebar shadow-xl shadow-bolt-elements-sidebar-dropdownShadow text-sm',
+          'flex flex-col side-menu fixed top-0 w-[310px] h-full bg-bolt-elements-background-depth-2 border-r rounded-r-3xl border-bolt-elements-borderColor z-sidebar shadow-xl shadow-bolt-elements-sidebar-dropdownShadow text-sm',
         )}
       >
         <div className="flex items-center h-[var(--header-height)]" />
@@ -176,11 +183,79 @@ export function Menu() {
               </Dialog>
             </DialogRoot>
           </div>
-          <div className="mt-auto border-t border-bolt-elements-borderColor p-4">
-            <ThemeSwitch className="ml-auto" />
+
+          {/* Bottom section with settings and theme */}
+          <div
+            className={classNames('mt-auto border-t border-bolt-elements-borderColor p-4', {
+              'bg-black': theme === 'dark',
+              'bg-white': theme === 'light',
+            })}
+          >
+            <div className="space-y-2">
+              <button
+                onClick={() => setShowSettings(true)}
+                className={classNames('flex items-center w-full px-3 py-2 rounded-md', {
+                  'bg-black text-white hover:text-white/80': theme === 'dark',
+                  'bg-white text-bolt-elements-textPrimary hover:bg-bolt-elements-item-backgroundActive':
+                    theme === 'light',
+                })}
+              >
+                <span className="i-ph:gear-six-duotone mr-2" />
+                Settings
+              </button>
+
+              <a
+                href="https://support.bolt.new/welcome"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={classNames('flex items-center w-full px-3 py-2 rounded-md', {
+                  'bg-black text-white hover:text-white/80': theme === 'dark',
+                  'bg-white text-bolt-elements-textPrimary hover:bg-bolt-elements-item-backgroundActive':
+                    theme === 'light',
+                })}
+              >
+                <span className="i-ph:question-duotone mr-2" />
+                Help Center
+              </a>
+
+              <button
+                onClick={toggleTheme}
+                className={classNames('flex items-center w-full px-3 py-2 rounded-md', {
+                  'bg-black text-white hover:text-white/80': theme === 'dark',
+                  'bg-white text-bolt-elements-textPrimary hover:bg-bolt-elements-item-backgroundActive':
+                    theme === 'light',
+                })}
+              >
+                <span className="i-ph:sun-dim-duotone mr-2" />
+                Toggle Theme
+              </button>
+            </div>
+          </div>
+
+          {/* User profile section - placeholder for future auth */}
+          <div className="p-4 border-t border-bolt-elements-borderColor">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full overflow-hidden">
+                <svg width="100%" height="100%" viewBox="0 0 32 32">
+                  <rect width="32" height="32" fill={theme === 'dark' ? '#1e1e1e' : '#e0e0e0'} />
+                  <circle cx="16" cy="11" r="5" fill={theme === 'dark' ? '#a0a0a0' : '#606060'} />
+                  <rect x="8" y="18" width="16" height="10" rx="2" fill={theme === 'dark' ? '#a0a0a0' : '#606060'} />
+                </svg>
+              </div>
+              <div
+                className={classNames('', {
+                  'text-white': theme === 'dark',
+                  'text-bolt-elements-textPrimary': theme === 'light',
+                })}
+              >
+                Guest
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
+
+      <Settings open={showSettings} onClose={() => setShowSettings(false)} />
     </>
   );
 }
