@@ -5,8 +5,6 @@ export async function action({ context }: ActionFunctionArgs) {
   try {
     const apiKey = getAPIKey(context.cloudflare.env);
 
-    console.log('Making Anthropic API request...');
-
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
