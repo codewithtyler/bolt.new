@@ -70,7 +70,7 @@ export function Settings({ open, onClose }: SettingsProps) {
         <DialogTitle className="sr-only">Settings</DialogTitle>
         <div className="flex h-[600px]">
           {/* Sidebar */}
-          <div className="w-[200px] bg-[#0A0A0A] border-r border-bolt-elements-borderColor">
+          <div className="w-[200px] bg-[#ffffff] dark:bg-[#0A0A0A] border-r border-bolt-elements-borderColor">
             <div className="p-3 flex flex-col gap-1">
               <TabButton
                 icon="i-ph:gear-six-duotone"
@@ -94,8 +94,8 @@ export function Settings({ open, onClose }: SettingsProps) {
           </div>
 
           {/* Content */}
-          <div className="flex-1 bg-[#171717]">
-            <div className="px-6 flex-1 relative overflow-y-auto color-white">
+          <div className="flex-1 bg-[#fafafa] dark:bg-[#171717]">
+            <div className="px-6 flex-1 relative overflow-y-auto text-[#000000] dark:text-white">
               {activeTab === 'general' && (
                 <>
                   <h2 className="pt-6 text-lg font-medium mb-4 sticky bg-bolt-elements-background-depth-2 top-0">
@@ -103,7 +103,7 @@ export function Settings({ open, onClose }: SettingsProps) {
                   </h2>
                   <div className="flex flex-col gap-6">
                     <div className="flex w-full justify-between items-center">
-                      <div className="text-sm text-white">Delete all chats</div>
+                      <div className="text-sm">Delete all chats</div>
                       <DialogButton type="danger" onClick={deleteAllChats}>
                         Delete all
                       </DialogButton>
@@ -118,7 +118,7 @@ export function Settings({ open, onClose }: SettingsProps) {
                   </h2>
                   <div className="flex flex-col gap-6">
                     <div className="flex w-full justify-between items-center">
-                      <div className="text-sm text-white">Theme</div>
+                      <div className="text-sm">Theme</div>
                       <ThemeSelect />
                     </div>
                   </div>
@@ -131,22 +131,22 @@ export function Settings({ open, onClose }: SettingsProps) {
                   </h2>
                   <div className="flex flex-col gap-6">
                     <div className="flex w-full justify-between items-center">
-                      <div className="text-sm text-white">Billing period</div>
-                      <div className="text-sm text-white">{billingDate}</div>
+                      <div className="text-sm">Billing period</div>
+                      <div className="text-sm">{billingDate}</div>
                     </div>
                     <div className="flex w-full justify-between items-center">
-                      <div className="text-sm text-white">Monthly tokens reset in</div>
-                      <div className="text-sm text-white">{resetIn}</div>
+                      <div className="text-sm">Monthly tokens reset in</div>
+                      <div className="text-sm">{resetIn}</div>
                     </div>
                     <div className="flex w-full justify-between items-center">
-                      <div className="text-sm text-white">Per month</div>
-                      <div className="text-sm text-white">
+                      <div className="text-sm">Per month</div>
+                      <div className="text-sm">
                         {tokens.totalTokensRemaining.toLocaleString()} / {tokens.totalTokensLimit.toLocaleString()}
                       </div>
                     </div>
                     <div className="flex w-full justify-between items-center">
-                      <div className="text-sm text-white">Requests remaining</div>
-                      <div className="text-sm text-white">
+                      <div className="text-sm">Requests remaining</div>
+                      <div className="text-sm">
                         {tokens.requestsRemaining.toLocaleString()} / {tokens.requestsLimit.toLocaleString()}
                       </div>
                     </div>
