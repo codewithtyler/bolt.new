@@ -25,6 +25,8 @@ import { BinaryContent } from './BinaryContent';
 import { getTheme, reconfigureTheme } from './cm-theme';
 import { indentKeyBinding } from './indent';
 import { getLanguage } from './languages';
+import { useStore } from '@nanostores/react';
+import { lineWrapStore } from '~/lib/stores/editor';
 
 const logger = createScopedLogger('CodeMirrorEditor');
 
@@ -133,6 +135,8 @@ export const CodeMirrorEditor = memo(
     renderLogger.trace('CodeMirrorEditor');
 
     const [languageCompartment] = useState(new Compartment());
+    const [lineWrapCompartment] = useState(new Compartment());
+    const lineWrap = useStore(lineWrapStore);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const viewRef = useRef<EditorView>();
@@ -212,9 +216,16 @@ export const CodeMirrorEditor = memo(
       const theme = themeRef.current!;
 
       if (!doc) {
-        const state = newEditorState('', theme, settings, onScrollRef, debounceScroll, onSaveRef, [
-          languageCompartment.of([]),
-        ]);
+        const state = newEditorState(
+          '',
+          theme,
+          settings,
+          onScrollRef,
+          debounceScroll,
+          onSaveRef,
+          [languageCompartment.of([])],
+          { lineWrap: lineWrapCompartment },
+        );
 
         view.setState(state);
 
@@ -234,9 +245,16 @@ export const CodeMirrorEditor = memo(
       let state = editorStates.get(doc.filePath);
 
       if (!state) {
-        state = newEditorState(doc.value, theme, settings, onScrollRef, debounceScroll, onSaveRef, [
-          languageCompartment.of([]),
-        ]);
+        state = newEditorState(
+          doc.value,
+          theme,
+          settings,
+          onScrollRef,
+          debounceScroll,
+          onSaveRef,
+          [languageCompartment.of([])],
+          { lineWrap: lineWrapCompartment },
+        );
 
         editorStates.set(doc.filePath, state);
       }
@@ -251,7 +269,17 @@ export const CodeMirrorEditor = memo(
         autoFocusOnDocumentChange,
         doc as TextEditorDocument,
       );
-    }, [doc?.value, editable, doc?.filePath, autoFocusOnDocumentChange]);
+    }, [doc?.value, editable, doc?.filePath, autoFocusOnDocumentChange, lineWrap]);
+
+    useEffect(() => {
+      if (!viewRef.current) {
+        return;
+      }
+
+      viewRef.current.dispatch({
+        effects: lineWrapCompartment.reconfigure(lineWrap ? EditorView.lineWrapping : []),
+      });
+    }, [lineWrap]);
 
     return (
       <div className={classNames('relative h-full', className)}>
@@ -274,89 +302,92 @@ function newEditorState(
   debounceScroll: number,
   onFileSaveRef: MutableRefObject<OnSaveCallback | undefined>,
   extensions: Extension[],
+  compartments: { lineWrap: Compartment },
 ) {
+  const baseExtensions = [
+    EditorView.domEventHandlers({
+      scroll: debounce((event, view) => {
+        if (event.target !== view.scrollDOM) {
+          return;
+        }
+
+        onScrollRef.current?.({ left: view.scrollDOM.scrollLeft, top: view.scrollDOM.scrollTop });
+      }, debounceScroll),
+      keydown: (event, view) => {
+        if (view.state.readOnly) {
+          view.dispatch({
+            effects: [readOnlyTooltipStateEffect.of(event.key !== 'Escape')],
+          });
+
+          return true;
+        }
+
+        return false;
+      },
+    }),
+    getTheme(theme, settings),
+    history(),
+    keymap.of([
+      ...defaultKeymap,
+      ...historyKeymap,
+      ...searchKeymap,
+      { key: 'Tab', run: acceptCompletion },
+      {
+        key: 'Mod-s',
+        preventDefault: true,
+        run: () => {
+          onFileSaveRef.current?.();
+          return true;
+        },
+      },
+      indentKeyBinding,
+    ]),
+    indentUnit.of('\t'),
+    autocompletion({
+      closeOnBlur: false,
+    }),
+    tooltips({
+      position: 'absolute',
+      parent: document.body,
+      tooltipSpace: (view) => {
+        const rect = view.dom.getBoundingClientRect();
+
+        return {
+          top: rect.top - 50,
+          left: rect.left,
+          bottom: rect.bottom,
+          right: rect.right + 10,
+        };
+      },
+    }),
+    closeBrackets(),
+    lineNumbers(),
+    scrollPastEnd(),
+    dropCursor(),
+    drawSelection(),
+    bracketMatching(),
+    EditorState.tabSize.of(settings?.tabSize ?? 2),
+    indentOnInput(),
+    editableTooltipField,
+    editableStateField,
+    EditorState.readOnly.from(editableStateField, (editable) => !editable),
+    highlightActiveLineGutter(),
+    highlightActiveLine(),
+    foldGutter({
+      markerDOM: (open) => {
+        const icon = document.createElement('div');
+
+        icon.className = `fold-icon ${open ? 'i-ph-caret-down-bold' : 'i-ph-caret-right-bold'}`;
+
+        return icon;
+      },
+    }),
+    compartments.lineWrap.of([]),
+  ];
+
   return EditorState.create({
     doc: content,
-    extensions: [
-      EditorView.domEventHandlers({
-        scroll: debounce((event, view) => {
-          if (event.target !== view.scrollDOM) {
-            return;
-          }
-
-          onScrollRef.current?.({ left: view.scrollDOM.scrollLeft, top: view.scrollDOM.scrollTop });
-        }, debounceScroll),
-        keydown: (event, view) => {
-          if (view.state.readOnly) {
-            view.dispatch({
-              effects: [readOnlyTooltipStateEffect.of(event.key !== 'Escape')],
-            });
-
-            return true;
-          }
-
-          return false;
-        },
-      }),
-      getTheme(theme, settings),
-      history(),
-      keymap.of([
-        ...defaultKeymap,
-        ...historyKeymap,
-        ...searchKeymap,
-        { key: 'Tab', run: acceptCompletion },
-        {
-          key: 'Mod-s',
-          preventDefault: true,
-          run: () => {
-            onFileSaveRef.current?.();
-            return true;
-          },
-        },
-        indentKeyBinding,
-      ]),
-      indentUnit.of('\t'),
-      autocompletion({
-        closeOnBlur: false,
-      }),
-      tooltips({
-        position: 'absolute',
-        parent: document.body,
-        tooltipSpace: (view) => {
-          const rect = view.dom.getBoundingClientRect();
-
-          return {
-            top: rect.top - 50,
-            left: rect.left,
-            bottom: rect.bottom,
-            right: rect.right + 10,
-          };
-        },
-      }),
-      closeBrackets(),
-      lineNumbers(),
-      scrollPastEnd(),
-      dropCursor(),
-      drawSelection(),
-      bracketMatching(),
-      EditorState.tabSize.of(settings?.tabSize ?? 2),
-      indentOnInput(),
-      editableTooltipField,
-      editableStateField,
-      EditorState.readOnly.from(editableStateField, (editable) => !editable),
-      highlightActiveLineGutter(),
-      highlightActiveLine(),
-      foldGutter({
-        markerDOM: (open) => {
-          const icon = document.createElement('div');
-
-          icon.className = `fold-icon ${open ? 'i-ph-caret-down-bold' : 'i-ph-caret-right-bold'}`;
-
-          return icon;
-        },
-      }),
-      ...extensions,
-    ],
+    extensions: [...baseExtensions, ...extensions],
   });
 }
 

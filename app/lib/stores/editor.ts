@@ -6,6 +6,20 @@ export type EditorDocuments = Record<string, EditorDocument>;
 
 type SelectedFile = WritableAtom<string | undefined>;
 
+const WRAP_KEY = 'bolt_editor_wrap';
+
+// get initial value from localStorage or default to true
+const initialWrap = typeof window !== 'undefined' ? localStorage.getItem(WRAP_KEY) !== 'false' : true;
+
+export const lineWrapStore = atom(initialWrap);
+
+// persist changes to localStorage
+if (typeof window !== 'undefined') {
+  lineWrapStore.subscribe((wrap) => {
+    localStorage.setItem(WRAP_KEY, wrap.toString());
+  });
+}
+
 export class EditorStore {
   #filesStore: FilesStore;
 

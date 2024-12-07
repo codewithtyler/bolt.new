@@ -9,18 +9,22 @@ import { chatId } from '~/lib/persistence';
 import { useStore } from '@nanostores/react';
 import { tokenStore, fetchTokenInfo } from '~/lib/stores/tokens';
 import { formatDistanceToNow, format, addMonths, differenceInHours } from 'date-fns';
+import Switch from '~/components/ui/Switch';
+import { lineWrapStore } from '~/lib/stores/editor';
 
 interface SettingsProps {
   open: boolean;
   onClose: () => void;
 }
 
-type Tab = 'general' | 'appearance' | 'tokens';
+type Tab = 'general' | 'appearance' | 'editor' | 'tokens';
 
 export function Settings({ open, onClose }: SettingsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const navigate = useNavigate();
   const tokens = useStore(tokenStore);
+  const lineWrap = useStore(lineWrapStore);
+  const setLineWrap = (wrap: boolean) => lineWrapStore.set(wrap);
 
   const resetDate = tokens.resetDate ? new Date(tokens.resetDate) : null;
   const now = new Date();
@@ -101,6 +105,12 @@ export function Settings({ open, onClose }: SettingsProps) {
                 onClick={() => setActiveTab('appearance')}
               />
               <TabButton
+                icon="i-ph:brackets-angle-duotone"
+                label="Editor"
+                isActive={activeTab === 'editor'}
+                onClick={() => setActiveTab('editor')}
+              />
+              <TabButton
                 icon="i-ph:coin-vertical-duotone"
                 label="Tokens"
                 isActive={activeTab === 'tokens'}
@@ -136,6 +146,19 @@ export function Settings({ open, onClose }: SettingsProps) {
                     <div className="flex w-full justify-between items-center">
                       <div className="text-sm">Theme</div>
                       <ThemeSelect />
+                    </div>
+                  </div>
+                </>
+              )}
+              {activeTab === 'editor' && (
+                <>
+                  <h2 className="pt-6 text-lg font-medium mb-4 sticky bg-bolt-elements-background-depth-2 top-0">
+                    Editor
+                  </h2>
+                  <div className="flex flex-col gap-6">
+                    <div className="flex w-full justify-between items-center">
+                      <div className="text-sm">Line Wrapping</div>
+                      <Switch checked={lineWrap} onCheckedChange={setLineWrap} />
                     </div>
                   </div>
                 </>
