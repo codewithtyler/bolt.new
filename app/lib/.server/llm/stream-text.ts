@@ -34,7 +34,7 @@ export async function streamText(messages: Messages, env: Env, options?: Streami
     system: getSystemPrompt(),
     maxTokens: MAX_TOKENS,
     headers: {
-      'anthropic-beta': 'max-tokens-3-5-sonnet-2024-07-15',
+      'anthropic-version': '2023-06-01',
       'x-api-key': getAPIKey(env),
       'content-type': 'application/json',
     },

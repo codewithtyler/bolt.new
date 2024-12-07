@@ -1,35 +1,32 @@
 import { atom } from 'nanostores';
 
-export type Theme = 'dark' | 'light';
+const THEME_KEY = 'bolt_theme';
 
-export const kTheme = 'bolt_theme';
+function getInitialTheme(): 'light' | 'dark' {
+  // only run in browser
+  if (typeof window !== 'undefined') {
+    // check localStorage first
+    const savedTheme = localStorage.getItem(THEME_KEY);
 
-export function themeIsDark() {
-  return themeStore.get() === 'dark';
-}
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      return savedTheme;
+    }
 
-export const DEFAULT_THEME = 'light';
-
-export const themeStore = atom<Theme>(initStore());
-
-function initStore() {
-  if (!import.meta.env.SSR) {
-    const persistedTheme = localStorage.getItem(kTheme) as Theme | undefined;
-    const themeAttribute = document.querySelector('html')?.getAttribute('data-theme');
-
-    return persistedTheme ?? (themeAttribute as Theme) ?? DEFAULT_THEME;
+    // fallback to system preference
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
   }
 
-  return DEFAULT_THEME;
+  return 'light';
 }
 
-export function toggleTheme() {
-  const currentTheme = themeStore.get();
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+export const themeStore = atom<'light' | 'dark'>(getInitialTheme());
 
-  themeStore.set(newTheme);
-
-  localStorage.setItem(kTheme, newTheme);
-
-  document.querySelector('html')?.setAttribute('data-theme', newTheme);
+// subscribe to changes and persist them
+if (typeof window !== 'undefined') {
+  themeStore.subscribe((theme) => {
+    localStorage.setItem(THEME_KEY, theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  });
 }

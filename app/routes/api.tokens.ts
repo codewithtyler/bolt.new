@@ -15,7 +15,7 @@ export async function action({ context }: ActionFunctionArgs) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-sonnet-latest',
         messages: [{ role: 'user', content: 'Hi' }],
         max_tokens: 1,
         stream: false,
@@ -33,7 +33,6 @@ export async function action({ context }: ActionFunctionArgs) {
     }
 
     const headers = Object.fromEntries(response.headers.entries());
-    console.log('Raw API response headers:', headers);
 
     // extract only the rate limit headers
     const rateLimitHeaders = {
@@ -47,8 +46,6 @@ export async function action({ context }: ActionFunctionArgs) {
       'anthropic-ratelimit-output-tokens-limit': headers['anthropic-ratelimit-output-tokens-limit'],
       'anthropic-ratelimit-output-tokens-remaining': headers['anthropic-ratelimit-output-tokens-remaining'],
     };
-
-    console.log('Rate limit headers:', rateLimitHeaders);
 
     return json({ headers: rateLimitHeaders });
   } catch (error) {

@@ -8,7 +8,7 @@ import { useNavigate } from '@remix-run/react';
 import { chatId } from '~/lib/persistence';
 import { useStore } from '@nanostores/react';
 import { tokenStore, fetchTokenInfo } from '~/lib/stores/tokens';
-import { formatDistanceToNow, format, addMonths } from 'date-fns';
+import { formatDistanceToNow, format, addMonths, differenceInHours } from 'date-fns';
 
 interface SettingsProps {
   open: boolean;
@@ -23,10 +23,26 @@ export function Settings({ open, onClose }: SettingsProps) {
   const tokens = useStore(tokenStore);
 
   const resetDate = tokens.resetDate ? new Date(tokens.resetDate) : null;
-  const resetIn = resetDate ? formatDistanceToNow(resetDate, { addSuffix: true }) : 'unknown';
+  const now = new Date();
 
-  // calculate next billing date as one month from reset date
-  const billingDate = resetDate ? format(addMonths(resetDate, 1), 'd MMMM yyyy') : 'unknown';
+  // format the billing period as a date range
+  const periodStart = resetDate ? format(resetDate, 'd MMMM yyyy') : 'unknown';
+  const periodEnd = resetDate ? format(addMonths(resetDate, 1), 'd MMMM yyyy') : 'unknown';
+  const billingPeriod = resetDate ? `${periodStart} - ${periodEnd}` : 'unknown';
+
+  // smart reset timing display
+  const resetIn = resetDate
+    ? (() => {
+        const nextReset = addMonths(resetDate, 1); // get next reset date
+        const hoursLeft = differenceInHours(nextReset, now);
+
+        if (hoursLeft < 24) {
+          return `${hoursLeft} hour${hoursLeft === 1 ? '' : 's'}`;
+        }
+
+        return formatDistanceToNow(nextReset, { addSuffix: true });
+      })()
+    : 'unknown';
 
   // fetch token info when settings opens
   useEffect(() => {
@@ -132,7 +148,7 @@ export function Settings({ open, onClose }: SettingsProps) {
                   <div className="flex flex-col gap-6">
                     <div className="flex w-full justify-between items-center">
                       <div className="text-sm">Billing period</div>
-                      <div className="text-sm">{billingDate}</div>
+                      <div className="text-sm">{billingPeriod}</div>
                     </div>
                     <div className="flex w-full justify-between items-center">
                       <div className="text-sm">Monthly tokens reset in</div>
