@@ -25,7 +25,7 @@ export function Settings({ open, onClose }: SettingsProps) {
   const resetDate = tokens.resetDate ? new Date(tokens.resetDate) : null;
   const resetIn = resetDate ? formatDistanceToNow(resetDate, { addSuffix: true }) : 'unknown';
 
-  // Calculate next billing date as one month from reset date
+  // calculate next billing date as one month from reset date
   const billingDate = resetDate ? format(addMonths(resetDate, 1), 'd MMMM yyyy') : 'unknown';
 
   // fetch token info when settings opens
