@@ -80,12 +80,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#000000' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#090909' }}>
       <div 
         className="fixed inset-0 pointer-events-none"
         style={{
           '--gradient-opacity': '0.85'
-        }}
+        } as React.CSSProperties}
       >
         <div 
           className="absolute w-[480px] h-[680px] -top-[540px] left-[250px]"
