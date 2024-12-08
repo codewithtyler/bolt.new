@@ -106,12 +106,7 @@ export const BaseChat = memo(
                 >
                   <div
                     className={classNames(
-                      'border border-bolt-elements-borderColor rounded-lg overflow-hidden relative',
-                      'bg-bolt-elements-prompt-background backdrop-filter backdrop-blur-[8px]',
-                      'before:absolute before:content-[""] before:top-0 before:left-0 before:w-[30%] before:h-[1px]',
-                      'before:bg-gradient-to-r before:from-[#0099ff] before:to-[var(--bolt-elements-borderColor)]',
-                      'after:absolute after:content-[""] after:top-0 after:left-0 after:w-[1px] after:h-[50%]',
-                      'after:bg-gradient-to-b after:from-[#0099ff] after:to-[var(--bolt-elements-borderColor)]',
+                      'shadow-sm border border-bolt-elements-borderColor bg-bolt-elements-prompt-background backdrop-filter backdrop-blur-[8px] rounded-lg overflow-hidden',
                     )}
                   >
                     <textarea
