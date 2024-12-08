@@ -28,11 +28,12 @@ interface BaseChatProps {
 }
 
 const EXAMPLE_PROMPTS = [
-  { text: 'Build a todo app in React using Tailwind' },
-  { text: 'Build a simple blog using Astro' },
-  { text: 'Create a cookie consent form using Material UI' },
-  { text: 'Make a space invaders game' },
-  { text: 'How do I center a div?' },
+  { text: 'Start a blog with Astro' },
+  { text: 'Build a mobile app with NativeScript' },
+  { text: 'Create a docs site with Vitepress' },
+  { text: 'Scaffold UI with shadcn' },
+  { text: 'Draft a presentation with Slidev' },
+  { text: 'Code a video with Remotion' },
 ];
 
 const TEXTAREA_MIN_HEIGHT = 76;
@@ -73,7 +74,7 @@ export const BaseChat = memo(
           <div ref={_scrollRef} className="flex overflow-y-auto w-full h-full">
             <div className={classNames(styles.Chat, 'flex flex-col flex-grow min-w-[var(--chat-min-width)] h-full')}>
               {!chatStarted && (
-                <div id="intro" className="mt-[26vh] max-w-xl mx-auto mb-2">
+                <div id="intro" className="mt-[15vh] max-w-xl mx-auto mb-2">
                   {/* Header */}
                   <h1 className="text-[44px] text-center font-semibold text-bolt-elements-textPrimary tracking-tight">
                     What do you want to build?
@@ -189,18 +190,17 @@ export const BaseChat = memo(
                 </div>
               </div>
               {!chatStarted && (
-                <div id="examples" className="relative w-full max-w-xl mx-auto mt-8 flex justify-center">
-                  <div className="flex flex-wrap gap-2 justify-center [mask-image:linear-gradient(to_bottom,black_0%,transparent_180%)] hover:[mask-image:none]">
+                <div id="examples" className="relative w-full max-w-[600px] mx-auto mt-8 flex justify-center">
+                  <div className="flex flex-wrap gap-2 justify-center">
                     {EXAMPLE_PROMPTS.map((examplePrompt, index) => (
                       <button
                         key={index}
                         onClick={(event) => {
                           sendMessage?.(event, examplePrompt.text);
                         }}
-                        className="group flex items-center gap-2 px-4 py-2 rounded-full bg-bolt-elements-background-depth-1 text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary transition-theme"
+                        className="group flex items-center px-2.5 py-1 rounded-full bg-transparent text-[#888] hover:text-white transition-all text-[11px] font-normal border border-[#333]"
                       >
                         {examplePrompt.text}
-                        <div className="i-ph:arrow-bend-down-left" />
                       </button>
                     ))}
                   </div>
