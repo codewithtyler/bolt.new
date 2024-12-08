@@ -74,9 +74,11 @@ export const BaseChat = memo(
             <div className={classNames(styles.Chat, 'flex flex-col flex-grow min-w-[var(--chat-min-width)] h-full')}>
               {!chatStarted && (
                 <div id="intro" className="mt-[26vh] max-w-xl mx-auto mb-2">
+                  {/* Header */}
                   <h1 className="text-[44px] text-center font-semibold text-bolt-elements-textPrimary tracking-tight">
                     What do you want to build?
                   </h1>
+                  {/* Subheader */}
                   <p className="mb-2 text-center text-bolt-elements-textSecondary">
                     Prompt, run, edit, and deploy full-stack web apps.
                   </p>
@@ -109,6 +111,7 @@ export const BaseChat = memo(
                       'shadow-sm border border-bolt-elements-borderColor bg-bolt-elements-prompt-background backdrop-filter backdrop-blur-[8px] rounded-lg overflow-hidden',
                     )}
                   >
+                    {/* Prompt textarea */}
                     <textarea
                       ref={textareaRef}
                       className={`w-full pl-4 pt-4 pr-16 focus:outline-none resize-none text-md text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary bg-transparent`}
