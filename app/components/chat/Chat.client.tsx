@@ -146,6 +146,8 @@ export const ChatImpl = memo(({ initialMessages, storeMessageHistory }: ChatProp
     setChatStarted(true);
   };
 
+  const generateMessageId = () => crypto.randomUUID();
+
   const sendMessage = async (_event: React.UIEvent, messageInput?: string) => {
     const _input = messageInput || input;
 
@@ -178,7 +180,11 @@ export const ChatImpl = memo(({ initialMessages, storeMessageHistory }: ChatProp
        * manually reset the input and we'd have to manually pass in file attachments. However, those
        * aren't relevant here.
        */
-      append({ role: 'user', content: `${diff}\n\n${_input}` });
+      append({ 
+        role: 'user', 
+        content: `${diff}\n\n${_input}`,
+        id: generateMessageId()
+      });
 
       /**
        * After sending a new message we reset all modifications since the model
@@ -186,7 +192,11 @@ export const ChatImpl = memo(({ initialMessages, storeMessageHistory }: ChatProp
        */
       workbenchStore.resetAllFileModifications();
     } else {
-      append({ role: 'user', content: _input });
+      append({ 
+        role: 'user', 
+        content: _input,
+        id: generateMessageId()
+      });
     }
 
     setInput('');

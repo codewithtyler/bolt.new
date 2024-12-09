@@ -1,7 +1,12 @@
 {
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["@remix-run/cloudflare", "vite/client", "@cloudflare/workers-types/2023-07-01"],
+    "types": [
+      "@remix-run/cloudflare",
+      "@cloudflare/workers-types",
+      "vite/client",
+      "node"
+    ],
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
@@ -20,7 +25,11 @@
     },
 
     // vite takes care of building everything, not tsc
-    "noEmit": true
+    "noEmit": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types"
+    ]
   },
   "include": [
     "**/*.ts",

@@ -79,5 +79,61 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#090909' }}>
+      <div 
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          '--gradient-opacity': '0.85'
+        } as React.CSSProperties}
+      >
+        <div 
+          className="absolute w-[480px] h-[680px] -top-[540px] left-[250px]"
+          style={{
+            background: 'radial-gradient(rgba(83, 196, 255, var(--gradient-opacity)) 0%, rgba(43, 166, 255, 0) 100%)',
+            transform: 'rotate(80deg)',
+            filter: 'blur(110px)',
+            mixBlendMode: 'overlay'
+          }}
+        />
+        <div 
+          className="absolute w-[110px] h-[400px] -top-[280px] left-[350px] opacity-60"
+          style={{
+            background: 'radial-gradient(rgba(83, 196, 255, var(--gradient-opacity)) 0%, rgba(43, 166, 255, 0) 100%)',
+            transform: 'rotate(-20deg)',
+            filter: 'blur(60px)',
+            mixBlendMode: 'overlay'
+          }}
+        />
+        <div 
+          className="absolute w-[400px] h-[370px] -top-[350px] left-[200px] opacity-60"
+          style={{
+            background: 'radial-gradient(rgba(83, 196, 255, var(--gradient-opacity)) 0%, rgba(43, 166, 255, 0) 100%)',
+            filter: 'blur(21px)',
+            mixBlendMode: 'overlay'
+          }}
+        />
+        <div 
+          className="absolute w-[330px] h-[370px] -top-[330px] left-[50px] opacity-50"
+          style={{
+            background: 'radial-gradient(rgba(83, 196, 255, var(--gradient-opacity)) 0%, rgba(43, 166, 255, 0) 100%)',
+            filter: 'blur(21px)',
+            mixBlendMode: 'overlay'
+          }}
+        />
+        <div 
+          className="absolute w-[110px] h-[400px] -top-[280px] left-[-10px] opacity-80"
+          style={{
+            background: 'radial-gradient(rgba(83, 196, 255, var(--gradient-opacity)) 0%, rgba(43, 166, 255, 0) 100%)',
+            transform: 'rotate(-40deg)',
+            filter: 'blur(60px)',
+            mixBlendMode: 'overlay'
+          }}
+        />
+      </div>
+      <div className="relative z-[2] flex-1">
+        <Outlet />
+      </div>
+    </div>
+  );
 }
