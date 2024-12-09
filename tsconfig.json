@@ -3,8 +3,9 @@
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": [
       "@remix-run/cloudflare",
+      "@cloudflare/workers-types",
       "vite/client",
-      "@cloudflare/workers-types/2023-07-01"
+      "node"
     ],
     "isolatedModules": true,
     "esModuleInterop": true,
