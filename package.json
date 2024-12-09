@@ -77,7 +77,7 @@
   },
   "devDependencies": {
     "@blitz/eslint-plugin": "0.1.0",
-    "@cloudflare/workers-types": "^4.20240620.0",
+    "@cloudflare/workers-types": "^4.20241205.0",
     "@remix-run/cloudflare": "^2.10.2",
     "@remix-run/dev": "^2.10.0",
     "@types/diff": "^5.2.1",
