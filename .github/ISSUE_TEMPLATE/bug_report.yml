@@ -30,8 +30,12 @@ body:
       label: Validations
       description: Before submitting the issue, please make sure you do the following
       options:
-        - label: "Please make your project public. ![Public Project](https://utfs.io/f/Z7LZ2jpNjvEALRh1ugzY28iwZcP7IloW1OKsd64SeRGFvMp0) This will allow anyone trying to help you to easily reproduce the issue and provide assistance."
+        - label: "Please make your project public. (See the image below.) This will allow anyone trying to help you to easily reproduce the issue and provide assistance."
           required: true
+- type: markdown
+    attributes:
+      value: |
+        ![Making your project public](https://utfs.io/f/Z7LZ2jpNjvEALRh1ugzY28iwZcP7IloW1OKsd64SeRGFvMp0)
   - type: textarea
     id: steps
     attributes:
