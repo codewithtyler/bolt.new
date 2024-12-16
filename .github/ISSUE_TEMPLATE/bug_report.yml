@@ -30,7 +30,7 @@ body:
       label: Validations
       description: Before submitting the issue, please make sure you do the following
       options:
-        - label: "Please make your project public. [![Public Project](../assets/images/public-bolt-project.png)] This will allow anyone trying to help you to easily reproduce the issue and provide assistance."
+        - label: "Please make your project public. [![Public Project](https://github.com/codewithtyler/bolt.new/blob/main/.github/assets/images/public-bolt-project.png?raw=true)] This will allow anyone trying to help you to easily reproduce the issue and provide assistance."
           required: true
   - type: textarea
     id: steps
